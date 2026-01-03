@@ -7,6 +7,7 @@ import { AuthService } from './auth.service';
 import { UsersModule } from 'src/application/users/users.module';
 import { LocalStrategy } from './strategies/local.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { PasswordResetModule } from './password-reset/password-reset.module';
 import authConfig from '../config/auth/auth.config';
 
 @Module({
@@ -21,6 +22,7 @@ import authConfig from '../config/auth/auth.config';
         signOptions: { expiresIn: `${config.jwt.expiresInMs}ms` },
       }),
     }),
+    PasswordResetModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, LocalStrategy, JwtStrategy],
