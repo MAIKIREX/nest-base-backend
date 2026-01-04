@@ -41,7 +41,9 @@ export class PasswordResetService {
 
   private buildResetLink(token: string) {
     const base = (this.cfg.frontendPublicUrl || '').replace(/\/+$/, '');
-    const path = (this.cfg.frontendResetPath || '/auth/update-password').startsWith('/')
+    const path = (
+      this.cfg.frontendResetPath || '/auth/update-password'
+    ).startsWith('/')
       ? this.cfg.frontendResetPath
       : `/${this.cfg.frontendResetPath}`;
 
@@ -55,11 +57,39 @@ export class PasswordResetService {
   }) {
     // Respuesta SIEMPRE genérica (anti-enumeración)
     const genericResponse = {
-      message: 'Si el correo existe, enviaremos instrucciones para restablecer la contraseña.',
+      message:
+        'Si el correo existe, enviaremos instrucciones para restablecer la contraseña.',
     };
 
     const user = await this.usersService.getUserByEmail(params.email);
     if (!user) return genericResponse;
+
+    const now = Date.now();
+    const windowStart = new Date(now - this.cfg.windowMs);
+
+    // 1) cooldown: último envío
+    const last = await this.resetRepo.findOne({
+      where: { userId: user.id },
+      order: { createdAt: 'DESC' },
+      select: ['id', 'createdAt'],
+    });
+
+    // si pidió hace muy poco, no enviamos otro correo
+    if (last && now - last.createdAt.getTime() < this.cfg.cooldownMs) {
+      return genericResponse;
+    }
+
+    // 2) max por ventana: cuántos emitiste en la última hora (o windowMs)
+    const countInWindow = await this.resetRepo.count({
+      where: {
+        userId: user.id,
+        createdAt: MoreThan(windowStart),
+      },
+    });
+
+    if (countInWindow >= this.cfg.maxPerWindow) {
+      return genericResponse;
+    }
 
     // Invalida tokens anteriores (one-active-token)
     await this.resetRepo.update(
@@ -81,7 +111,10 @@ export class PasswordResetService {
     });
 
     const resetLink = this.buildResetLink(rawToken);
-    const expiresMinutes = Math.max(1, Math.floor(this.cfg.expiresInMs / 60000));
+    const expiresMinutes = Math.max(
+      1,
+      Math.floor(this.cfg.expiresInMs / 60000),
+    );
 
     // Envía email
     await this.mailer.sendResetPasswordEmail({
@@ -132,7 +165,11 @@ export class PasswordResetService {
 
       const passwordHash = await bcrypt.hash(newPassword, 10);
 
-      await userRepo.update({ id: record.userId }, { password: passwordHash });
+      await userRepo.update(
+        { id: record.userId },
+        { password: passwordHash, passwordChangedAt: now },
+      );
+
       await tokenRepo.update({ id: record.id }, { usedAt: now });
 
       return { message: 'Contraseña actualizada correctamente' };

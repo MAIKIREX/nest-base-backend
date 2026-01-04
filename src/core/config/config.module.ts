@@ -63,6 +63,11 @@ import dbConfig from './database/database.config';
         SMTP_USER: Joi.string().required(),
         SMTP_PASS: Joi.string().required(),
         SMTP_FROM: Joi.string().required(),
+
+        RESET_RATE_LIMIT_COOLDOWN_MS: Joi.number().default(120000),
+        RESET_RATE_LIMIT_WINDOW_MS: Joi.number().default(3600000),
+        RESET_RATE_LIMIT_MAX_PER_WINDOW: Joi.number().integer().min(1).max(50).default(5),
+
       }),
     }),
   ],

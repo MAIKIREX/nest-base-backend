@@ -9,6 +9,11 @@ export interface PasswordResetConfig {
   pepper: string;
   expiresInMs: number;
   tokenBytes: number;
+
+  // ✅ rate limit
+  cooldownMs: number;
+  windowMs: number;
+  maxPerWindow: number;
 }
 
 export default registerAs('passwordReset', (): PasswordResetConfig => ({
@@ -17,4 +22,10 @@ export default registerAs('passwordReset', (): PasswordResetConfig => ({
   pepper: process.env.RESET_TOKEN_PEPPER ?? 'change_me_in_prod',
   expiresInMs: toInt(process.env.RESET_TOKEN_EXPIRES_IN_MS, 3600000),
   tokenBytes: toInt(process.env.RESET_TOKEN_BYTES, 32),
+
+  // ✅ rate limit
+  cooldownMs: toInt(process.env.RESET_RATE_LIMIT_COOLDOWN_MS, 120000),
+  windowMs: toInt(process.env.RESET_RATE_LIMIT_WINDOW_MS, 3600000),
+  maxPerWindow: toInt(process.env.RESET_RATE_LIMIT_MAX_PER_WINDOW, 5),
 }));
+

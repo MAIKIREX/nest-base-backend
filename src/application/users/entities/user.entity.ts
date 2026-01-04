@@ -74,6 +74,9 @@ export class User {
   })
   updatedAt: Date;
 
+  @Column({ name: 'password_changed_at', type: 'timestamptz', nullable: true })
+  passwordChangedAt: Date | null;
+
   @ApiProperty({ type: () => Profile, description: 'Perfil del usuario' })
   @OneToOne(() => Profile, { cascade: true, nullable: false })
   @JoinColumn({ name: 'perfil_id' })

@@ -1,4 +1,9 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
@@ -22,10 +27,6 @@ export class UsersService {
 
   async getUserById(id: string) {
     const user = await this.findOne(id);
-
-    // si quieres bloquear al usuario raíz, su ID debe ser string
-    // ej: if (user.id === '1') { ... }
-    // pero como usas UUID, probablemente NO necesitas este check
     return user;
   }
 
@@ -58,9 +59,15 @@ export class UsersService {
     try {
       const user = await this.findOne(id);
 
-      const updates: UpdateUserDto = { ...changes };
+      const updates: UpdateUserDto & { passwordChangedAt?: Date } = {
+        ...changes,
+      };
+
       if (changes.password) {
         updates.password = await bcrypt.hash(changes.password, 10);
+
+        // ✅ NUEVO: marca cuándo se cambió la contraseña
+        updates.passwordChangedAt = new Date();
       }
 
       const updatedUser = this.usersRepository.merge(user, updates);
