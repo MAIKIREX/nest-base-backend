@@ -12,7 +12,7 @@ async function bootstrap() {
   app.setGlobalPrefix(prefix);
 
   // CORS: restringe a orígenes declarados en ENV (separados por coma)
-  const allowedOrigins = (process.env.URL_FRONTEND ?? '')
+  const allowedOrigins = (process.env.FRONTEND_PUBLIC_URL ?? '')
     .split(',')
     .map((o) => o.trim().replace(/\/$/, ''))
     .filter((o) => o.length > 0);

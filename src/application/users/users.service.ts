@@ -104,6 +104,7 @@ export class UsersService {
   async getUserByEmail(email: string): Promise<User | null> {
     return this.usersRepository
       .createQueryBuilder('user')
+      .leftJoinAndSelect('user.profile', 'profile')
       .addSelect('user.password')
       .where('user.email = :email', { email })
       .getOne();
